@@ -1,6 +1,8 @@
 import React from "react";
+import { addYears, addMonths, addDays, addMinutes } from 'date-fns'
 import "./ReminderForm.css";
 import { Formik, Form, Field } from "formik";
+import { v4 as uuid } from 'uuid';
 import Box from "@mui/material/Box";
 import * as Yup from "yup";
 
@@ -19,6 +21,46 @@ const ReminderFormSchema = Yup.object().shape({
     .required("Email Required"),
 });
 
+const getScheduledDate = (timeAmount, timeUnit) => {
+  let scheduledDate = new Date();
+
+  switch (timeUnit) {
+    case "year":
+      scheduledDate = addYears(scheduledDate, timeAmount);
+      break;
+    case "month":
+      scheduledDate = addMonths(scheduledDate, timeAmount);
+      break;
+    case "day":
+      scheduledDate = addDays(scheduledDate, timeAmount);
+      break;
+    case "minute":
+      scheduledDate = addMinutes(scheduledDate, timeAmount);
+  }
+
+  return scheduledDate;
+}
+
+const getCronExpression = (date) => {
+  const year = date.getUTCFullYear();
+  const month = date.getUTCMonth() + 1;
+  const day = date.getUTCDate();
+  const hour = date.getUTCHours();
+  const minute = date.getUTCMinutes();
+
+  return "cron(" + minute + " " + hour + " " + day + " " + month + " ? " + year + ")";
+};
+
+const getReminderRequest = (schedDate, email, message) => {
+
+  return {
+    requestId: uuid(),
+    cronExpression: getCronExpression(schedDate),
+    reminderContent: message,
+    toEmailAddress: email
+  }
+};
+
 export const ReminderForm = () => (
   <Box>
     <Formik
@@ -29,9 +71,13 @@ export const ReminderForm = () => (
         timeUnit: "year",
       }}
       validationSchema={ReminderFormSchema}
-      onSubmit={(values) => {
+      onSubmit={(formValues) => {
         // same shape as initial values
-        console.log(values);
+
+        const schedDate = getScheduledDate(formValues.timeAmount, formValues.timeUnit);
+        const reminderRequest = getReminderRequest(schedDate, formValues.email, formValues.message);
+        console.log(reminderRequest);
+
       }}
     >
       {({ errors, touched, values }) => (
@@ -45,7 +91,7 @@ export const ReminderForm = () => (
 
             <Field as="select" name="timeUnit">
               <option value="minute">Minute(s)</option>
-              <option value="hour">Hour(s)</option>
+              <option value="day">Day(s)</option>
               <option value="month">Month(s)</option>
               <option value="year">Year(s)</option>
             </Field>

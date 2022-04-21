@@ -5,6 +5,7 @@ import { Formik, Form, Field } from "formik";
 import { v4 as uuid } from 'uuid';
 import Box from "@mui/material/Box";
 import * as Yup from "yup";
+import axios from "axios";
 
 const ReminderFormSchema = Yup.object().shape({
   timeAmount: Yup.number()
@@ -61,6 +62,14 @@ const getReminderRequest = (schedDate, email, message) => {
   }
 };
 
+const createReminder = (reminderRequest) => {
+  const baseUrl = process.env.REACT_APP_BACKEND_URL;
+
+  axios.post(baseUrl + '/reminder', reminderRequest).then((response) => {
+    console.log(response);
+  })
+};
+
 export const ReminderForm = () => (
   <Box>
     <Formik
@@ -76,7 +85,7 @@ export const ReminderForm = () => (
 
         const schedDate = getScheduledDate(formValues.timeAmount, formValues.timeUnit);
         const reminderRequest = getReminderRequest(schedDate, formValues.email, formValues.message);
-        console.log(reminderRequest);
+        createReminder(reminderRequest);
 
       }}
     >
